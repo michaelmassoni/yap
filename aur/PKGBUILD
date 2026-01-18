@@ -1,0 +1,36 @@
+# Maintainer: Michael Massoni <hello@michaelmassoni.com>
+pkgname=yap-git
+pkgver=r. # Placeholder, will be updated by pkgver()
+pkgrel=1
+pkgdesc="A simple, human-readable wrapper for yay"
+arch=('x86_64' 'aarch64')
+url="https://github.com/michaelmassoni/yap"
+license=('GPL3')
+depends=('yay')
+makedepends=('git' 'go')
+provides=("yap")
+conflicts=("yap")
+source=("git+https://github.com/michaelmassoni/yap.git")
+md5sums=('SKIP')
+
+pkgver() {
+	cd "$srcdir/yap"
+	printf "r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+	cd "$srcdir/yap"
+	export CGO_ENABLED=0
+	go build -trimpath -ldflags "-s -w" -o yap main.go
+}
+
+package() {
+	cd "$srcdir/yap"
+	install -Dm755 yap "$pkgdir/usr/bin/yap"
+	if [ -f LICENSE ]; then
+		install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	fi
+	if [ -f README.md ]; then
+		install -Dm644 README.md "$pkgdir/usr/share/doc/$pkgname/README.md"
+	fi
+}
