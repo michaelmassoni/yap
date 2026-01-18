@@ -1,3 +1,6 @@
 # Binaries
 /yap
 /yap-linux-amd64
+
+# Maintainer files
+MAINTENANCE.md
