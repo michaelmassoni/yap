@@ -1,5 +1,3 @@
+# Binaries
 /yap
-aur/src/
-aur/pkg/
-aur/*.pkg.tar.zst
-aur/*.src.tar.gz
+/yap-linux-amd64

@@ -27,13 +27,16 @@ It provides a user-friendly verb-based syntax instead of `pacman`/`yay`'s tradit
 | `yap list native` | `yay -Qn` | List native repository packages |
 | `yap list aur` | `yay -Qm` | List AUR packages |
 
-## Build and Install
+## Installation
 
-### Requirements
-*   Go (1.20+)
-*   `yay` (must be installed and in your PATH)
+### AUR (Arch Linux)
+`yap` is available on the AUR as `yap-bin`.
 
-### Build Steps
+```bash
+yay -S yap-bin
+```
+
+### Manual Build
 
 1.  Clone the repository:
     ```bash
@@ -41,12 +44,8 @@ It provides a user-friendly verb-based syntax instead of `pacman`/`yay`'s tradit
     cd yap
     ```
 
-2.  Build the binary:
+2.  Build and install:
     ```bash
     go build -o yap main.go
-    ```
-
-3.  (Optional) Move to your PATH:
-    ```bash
     sudo mv yap /usr/local/bin/
     ```
