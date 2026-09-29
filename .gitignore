@@ -3,4 +3,5 @@
 /yap-linux-amd64
 
 # Maintainer files
-MAINTENANCE.md
+MAINTENANCE.mdbin/
+yap-bin/
