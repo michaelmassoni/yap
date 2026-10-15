@@ -1,7 +1,8 @@
 # Binaries
 /yap
 /yap-linux-amd64
+bin/
+yap-bin/
 
 # Maintainer files
-MAINTENANCE.mdbin/
-yap-bin/
+MAINTENANCE.md

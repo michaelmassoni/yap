@@ -36,6 +36,8 @@ It provides a user-friendly verb-based syntax instead of `pacman`/`yay`'s tradit
 yay -S yap-bin
 ```
 
+> **Note:** `yap-bin` conflicts with the unrelated [`yap`](https://aur.archlinux.org/packages/yap) package (YAP Prolog), since both install `/usr/bin/yap`.
+
 ### Manual Build
 
 1.  Clone the repository:
@@ -46,6 +48,6 @@ yay -S yap-bin
 
 2.  Build and install:
     ```bash
-    go build -o yap main.go
+    CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o yap .
     sudo mv yap /usr/local/bin/
     ```
