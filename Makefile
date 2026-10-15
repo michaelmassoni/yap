@@ -1,9 +1,13 @@
-.PHONY: all build-all clean
+.PHONY: all build build-all test clean
 
-BUILD_FLAGS := -trimpath -ldflags "-s -w"
+VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
+BUILD_FLAGS := -trimpath -ldflags "-s -w -X main.version=$(VERSION)"
 export CGO_ENABLED := 0
 
-all: build-all
+all: test build-all
+
+build:
+	go build $(BUILD_FLAGS) -o yap .
 
 build-all: clean
 	mkdir -p bin
@@ -14,5 +18,9 @@ build-all: clean
 	# ARMv7 (armv7h)
 	GOOS=linux GOARCH=arm GOARM=7 go build $(BUILD_FLAGS) -o bin/yap_armv7h .
 
+test:
+	go vet ./...
+	go test ./...
+
 clean:
-	rm -rf bin/
+	rm -rf bin/ yap

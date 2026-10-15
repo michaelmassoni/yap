@@ -16,16 +16,40 @@ It provides a user-friendly verb-based syntax instead of `pacman`/`yay`'s tradit
 | :--- | :--- | :--- |
 | `yap update` | `yay -Syu` | Update all packages (Repo + AUR) |
 | `yap install <pkg>` | `yay -S <pkg>` | Install packages |
-| `yap remove <pkg>` | `yay -Rs <pkg>` | Remove packages (keep config) |
-| `yap purge <pkg>` | `yay -Rns <pkg>` | Remove packages and config |
+| `yap remove <pkg>` | `yay -Rs <pkg>` | Remove packages and unneeded dependencies (modified config files are kept as `.pacsave`) |
+| `yap purge <pkg>` | `yay -Rns <pkg>` | Like `remove`, but without keeping `.pacsave` backups (files in `~` are never touched) |
 | `yap search <query>` | `yay -Ss <query>` | Search for packages |
-| `yap info <pkg>` | `yay -Si <pkg>` | Show package info |
+| `yap info <pkg>` | `yay -Si <pkg>` | Show package info from the repositories/AUR |
+| `yap info --local <pkg>` | `yay -Qi <pkg>` | Show info for an installed package |
 | `yap clean` | `yay -Sc` | Clean package cache |
 | `yap autoremove` | `yay -Yc` | Remove unneeded dependencies |
-| `yap list` | `yay -Q` | List all installed packages |
+| `yap list` / `yap list all` | `yay -Q` | List all installed packages |
 | `yap list explicit`| `yay -Qe` | List explicitly installed packages |
 | `yap list native` | `yay -Qn` | List native repository packages |
 | `yap list aur` | `yay -Qm` | List AUR packages |
+| `yap version` | | Show the yap version |
+
+Extra options such as `--needed` or `--noconfirm` are passed straight through to `yay`. Flags that would switch `yay` to a different operation (e.g. `yap info -R pkg`) are rejected, so each command only does what its name says. Arguments after `--` are passed through untouched.
+
+### Dry run
+
+Add `--dry-run` to any command to print the `yay` command without running it:
+
+```console
+$ yap install firefox --dry-run
+yay -S firefox
+```
+
+### Shell completion
+
+```bash
+# fish
+yap completion fish > ~/.config/fish/completions/yap.fish
+# bash
+yap completion bash > ~/.local/share/bash-completion/completions/yap
+# zsh (any directory in your $fpath)
+yap completion zsh > "${fpath[1]}/_yap"
+```
 
 ## Installation
 
@@ -48,6 +72,33 @@ yay -S yap-bin
 
 2.  Build and install:
     ```bash
-    CGO_ENABLED=0 go build -trimpath -ldflags "-s -w" -o yap .
-    sudo mv yap /usr/local/bin/
+    make build
+    sudo install -Dm755 yap /usr/local/bin/yap
     ```
+
+### Verifying release binaries
+
+Release binaries are built by GitHub Actions from the tagged source. Each release includes a `SHA256SUMS` file and a signed build provenance attestation:
+
+```bash
+sha256sum -c --ignore-missing SHA256SUMS
+gh attestation verify yap_x86_64 --repo michaelmassoni/yap
+```
+
+## Development
+
+```bash
+make test        # go vet + unit tests
+make build       # build ./yap for this machine
+make build-all   # cross-compile release binaries into bin/
+```
+
+### Releasing
+
+Push a `v*` tag and the [release workflow](.github/workflows/release.yml) tests, builds all architectures, generates checksums and provenance, and publishes the GitHub release:
+
+```bash
+git tag v1.1.0 && git push origin v1.1.0
+```
+
+Then update the [`yap-bin`](https://aur.archlinux.org/packages/yap-bin) PKGBUILD with the new version and the checksums from `SHA256SUMS`.
