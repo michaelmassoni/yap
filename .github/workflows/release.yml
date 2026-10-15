@@ -1,0 +1,33 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write      # create the release
+      id-token: write      # sign build provenance
+      attestations: write  # store build provenance
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+      - name: Vet and test
+        run: make test
+      - name: Build binaries
+        run: make build-all VERSION="$GITHUB_REF_NAME"
+      - name: Generate checksums
+        working-directory: bin
+        run: sha256sum yap_* > SHA256SUMS && cat SHA256SUMS
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: bin/yap_*
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" bin/* --title "$GITHUB_REF_NAME" --generate-notes --verify-tag
