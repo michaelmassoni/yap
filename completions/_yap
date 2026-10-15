@@ -1,0 +1,40 @@
+#compdef yap
+# zsh completion for yap
+
+_yap() {
+    local -a cmds
+    cmds=(
+        'update:Update system (yay -Syu)'
+        'install:Install packages (yay -S)'
+        'remove:Remove packages (yay -Rs)'
+        'purge:Remove packages without .pacsave backups (yay -Rns)'
+        'search:Search for packages (yay -Ss)'
+        'info:Show package information (yay -Si)'
+        'clean:Clean package cache (yay -Sc)'
+        'autoremove:Remove unneeded dependencies (yay -Yc)'
+        'list:List packages (yay -Q)'
+        'completion:Print shell completion script'
+        'version:Show version'
+        'help:Show help'
+    )
+
+    if (( CURRENT == 2 )); then
+        _describe 'command' cmds
+        return
+    fi
+
+    case $words[2] in
+        install)      compadd -- --dry-run ${(f)"$(pacman -Slq 2>/dev/null)"} ;;
+        remove|purge) compadd -- --dry-run ${(f)"$(pacman -Qq 2>/dev/null)"} ;;
+        info)         compadd -- --local --dry-run ${(f)"$(pacman -Slq 2>/dev/null)"} ;;
+        list)         (( CURRENT == 3 )) && compadd all explicit native aur ;;
+        completion)   (( CURRENT == 3 )) && compadd bash zsh fish ;;
+        *)            compadd -- --dry-run ;;
+    esac
+}
+
+if [[ $zsh_eval_context[-1] == loadautofunc ]]; then
+    _yap "$@"
+else
+    compdef _yap yap
+fi
