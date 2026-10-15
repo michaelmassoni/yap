@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
+	"syscall"
 )
 
 func main() {
@@ -27,7 +29,7 @@ func main() {
 	case "install":
 		// yap install pkg -> yay -S pkg
 		if len(args) == 0 {
-			fmt.Println("Error: 'install' requires at least one package name.")
+			fmt.Fprintln(os.Stderr, "Error: 'install' requires at least one package name.")
 			os.Exit(1)
 		}
 		yayArgs = []string{"-S"}
@@ -36,7 +38,7 @@ func main() {
 	case "remove":
 		// yap remove pkg -> yay -Rs pkg (keep config)
 		if len(args) == 0 {
-			fmt.Println("Error: 'remove' requires at least one package name.")
+			fmt.Fprintln(os.Stderr, "Error: 'remove' requires at least one package name.")
 			os.Exit(1)
 		}
 		yayArgs = []string{"-Rs"}
@@ -45,7 +47,7 @@ func main() {
 	case "purge":
 		// yap purge pkg -> yay -Rns pkg (remove config)
 		if len(args) == 0 {
-			fmt.Println("Error: 'purge' requires at least one package name.")
+			fmt.Fprintln(os.Stderr, "Error: 'purge' requires at least one package name.")
 			os.Exit(1)
 		}
 		yayArgs = []string{"-Rns"}
@@ -54,7 +56,7 @@ func main() {
 	case "search":
 		// yap search query -> yay -Ss query
 		if len(args) == 0 {
-			fmt.Println("Error: 'search' requires a query string.")
+			fmt.Fprintln(os.Stderr, "Error: 'search' requires a query string.")
 			os.Exit(1)
 		}
 		yayArgs = []string{"-Ss"}
@@ -67,7 +69,7 @@ func main() {
 		// Actually, yay -Si is "Sync Info" (repository). yay -Qi is "Query Info" (local).
 		// Let's default to -Si (Remote) because usually you want to find out about a package.
 		if len(args) == 0 {
-			fmt.Println("Error: 'info' requires a package name.")
+			fmt.Fprintln(os.Stderr, "Error: 'info' requires a package name.")
 			os.Exit(1)
 		}
 		yayArgs = []string{"-Si"}
@@ -88,6 +90,8 @@ func main() {
 		yayArgs = []string{"-Q"}
 		if len(args) > 0 {
 			switch args[0] {
+			case "all":
+				args = args[1:]
 			case "explicit":
 				yayArgs = []string{"-Qe"}
 				args = args[1:]
@@ -106,7 +110,7 @@ func main() {
 		return
 
 	default:
-		fmt.Printf("Unknown command: %s\n", command)
+		fmt.Fprintf(os.Stderr, "Unknown command: %s\n", command)
 		printUsage()
 		os.Exit(1)
 	}
@@ -115,22 +119,20 @@ func main() {
 }
 
 func runYay(args []string) {
-	cmd := exec.Command("yay", args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	fmt.Printf("-> Executing: yay %v\n", args)
-	
-	err := cmd.Run()
+	path, err := exec.LookPath("yay")
 	if err != nil {
-		// Exit with the same code as the subcommand if possible
-		if exitError, ok := err.(*exec.ExitError); ok {
-			os.Exit(exitError.ExitCode())
-		}
-		fmt.Printf("Error executing yay: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error: yay not found in PATH: %v\n", err)
 		os.Exit(1)
 	}
+
+	// Status goes to stderr so piped output (e.g. yap list) stays clean.
+	fmt.Fprintf(os.Stderr, "-> Executing: yay %s\n", strings.Join(args, " "))
+
+	// Replace this process with yay so signals, exit codes and the terminal
+	// behave exactly as if yay had been run directly.
+	err = syscall.Exec(path, append([]string{"yay"}, args...), os.Environ())
+	fmt.Fprintf(os.Stderr, "Error executing yay: %v\n", err)
+	os.Exit(1)
 }
 
 func printUsage() {
